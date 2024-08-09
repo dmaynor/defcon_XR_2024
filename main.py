@@ -1,4 +1,5 @@
 import os
+import argparse
 import sqlite3
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import SerperDevTool
@@ -32,6 +33,27 @@ def log_to_db(command, output):
     c.execute("INSERT INTO network_info (command, output) VALUES (?, ?)", (command, output))
     conn.commit()
     conn.close()
+
+# Define a function to read network data from the SQLite database
+def read_network_data():
+    conn = sqlite3.connect('network_info.db')
+    c = conn.cursor()
+    c.execute("SELECT command, output FROM network_info")
+    data = c.fetchall()
+    conn.close()
+    return data
+
+# Define a function to craft CTF challenges based on network data
+def craft_ctf_challenges(network_data):
+    challenges = []
+    for command, output in network_data:
+        if "ifconfig" in command:
+            challenges.append(f"Analyze the following ifconfig output and identify the IP address:\n{output}")
+        elif "netstat" in command:
+            challenges.append(f"Examine the netstat output and determine the active connections:\n{output}")
+        elif "hostname" in command:
+            challenges.append(f"Given the hostname output, find the machine's name:\n{output}")
+    return challenges
 
 # Define the operator agent
 operator = Agent(
@@ -150,6 +172,24 @@ crew = Crew(
     process=Process.sequential
 )
 
-# Kickoff the crew process
-result = crew.kickoff(inputs={'topic': 'Digital Twin Network Recreation'})
-print(result)
+# Define the CLI interface
+def main():
+    parser = argparse.ArgumentParser(description="Manage the crew for digital twin network recreation")
+    parser.add_argument('--craft-ctf', action='store_true', help="Craft CTF challenges from network data")
+
+    args = parser.parse_args()
+
+    if args.craft_ctf:
+        # Read network data from the database
+        network_data = read_network_data()
+        # Craft CTF challenges based on the data
+        challenges = craft_ctf_challenges(network_data)
+        for idx, challenge in enumerate(challenges, 1):
+            print(f"Challenge {idx}: {challenge}")
+    else:
+        # Kickoff the crew process
+        result = crew.kickoff(inputs={'topic': 'Digital Twin Network Recreation'})
+        print(result)
+
+if __name__ == "__main__":
+    main()
