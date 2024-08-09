@@ -1,4 +1,5 @@
 import os
+import sqlite3
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import SerperDevTool
 
@@ -8,6 +9,29 @@ os.environ["OPENAI_API_KEY"] = "Your OpenAI API Key"
 
 # Initialize the SerperDevTool for web search
 search_tool = SerperDevTool()
+
+# Define a function to create a SQLite database and table if they don't exist
+def init_db():
+    conn = sqlite3.connect('network_info.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS network_info (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    command TEXT,
+                    output TEXT
+                 )''')
+    conn.commit()
+    conn.close()
+
+# Call the init_db function to ensure the database and table are created
+init_db()
+
+# Define a function to log findings to the SQLite database
+def log_to_db(command, output):
+    conn = sqlite3.connect('network_info.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO network_info (command, output) VALUES (?, ?)", (command, output))
+    conn.commit()
+    conn.close()
 
 # Define the operator agent
 operator = Agent(
@@ -63,10 +87,28 @@ collect_network_info = Task(
     description=(
         "Execute commands to gather network and host information."
         " Use tools like `ifconfig`, `netstat`, and `hostname` to collect the necessary data."
+        " Log the findings to a SQLite database."
     ),
     expected_output='A detailed report containing the network configuration and host information.',
     tools=[search_tool],
     agent=operator,
+    actions=[
+        {
+            "action": "execute",
+            "command": "ifconfig",
+            "log_to_db": True
+        },
+        {
+            "action": "execute",
+            "command": "netstat",
+            "log_to_db": True
+        },
+        {
+            "action": "execute",
+            "command": "hostname",
+            "log_to_db": True
+        }
+    ]
 )
 
 # Define the task for decomposing tasks
