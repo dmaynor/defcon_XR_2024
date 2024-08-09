@@ -1,0 +1,23 @@
+collect_network_info:
+  description: >
+    Execute commands to gather network and host information. Use tools like `ifconfig`, `netstat`, and `hostname` to collect the necessary data.
+  expected_output: >
+    A detailed report containing the network configuration and host information.
+
+decompose_tasks:
+  description: >
+    Decompose the complex task of recreating the network in Docker into smaller, manageable tasks and delegate them accordingly.
+  expected_output: >
+    A set of clearly defined tasks for recreating the network in Docker.
+
+recreate_network_docker:
+  description: >
+    Use the collected network and host information to recreate the target network in Docker. Ensure that all configurations are accurately replicated.
+  expected_output: >
+    A Docker Compose file and any necessary scripts to recreate the network.
+
+review_and_critique:
+  description: >
+    Review the tasks and provide feedback to ensure accuracy and efficiency. Help the agents think through any challenges they face.
+  expected_output: >
+    A report with feedback and suggestions for improvement.
